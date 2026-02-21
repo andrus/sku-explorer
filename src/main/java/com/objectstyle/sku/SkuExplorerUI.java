@@ -126,7 +126,7 @@ public class SkuExplorerUI extends ToolkitApp {
             return EventResult.HANDLED;
         }
 
-        LOGGER.info("Event {}", event.code());
+        LOGGER.info("unhandled event: {}", event.code());
 
         return EventResult.UNHANDLED;
     }
