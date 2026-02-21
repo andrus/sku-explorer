@@ -13,12 +13,16 @@ import dev.tamboui.widgets.table.Cell;
 import dev.tamboui.widgets.table.Row;
 import dev.tamboui.widgets.table.TableState;
 import org.dflib.DataFrame;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.YearMonth;
 
 import static dev.tamboui.toolkit.Toolkit.*;
 
 public class SkuExplorerUI extends ToolkitApp {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SkuExplorerUI.class);
 
     private final SkuDAO skuDAO;
 
@@ -121,6 +125,8 @@ public class SkuExplorerUI extends ToolkitApp {
             uiSkusState.selectPrevious();
             return EventResult.HANDLED;
         }
+
+        LOGGER.info("Event {}", event.code());
 
         return EventResult.UNHANDLED;
     }

@@ -10,6 +10,8 @@ import jakarta.inject.Singleton;
 
 public class SkuExplorerApp implements BQModule {
 
+    static final String APP_NAME = "sku-explorer";
+
     static void main(String[] args) {
         Bootique.main(args);
     }
@@ -18,7 +20,11 @@ public class SkuExplorerApp implements BQModule {
     public void configure(Binder binder) {
         BQCoreModule.extend(binder)
                 .setDefaultCommand(StartUICommand.class)
-                .addConfig("classpath:config.yml");
+                .setApplicationDescription("A terminal UI app for managing ObjectStyle SKU dataset")
+
+                // logging
+                .setProperty("bq.log.appenders[0].type", "file")
+                .setProperty("bq.log.appenders[0].file", XdgDirs.stateDir().resolve("app.log").toAbsolutePath().toString());
     }
 
     @Provides
