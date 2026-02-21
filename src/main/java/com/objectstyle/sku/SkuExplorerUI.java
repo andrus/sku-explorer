@@ -1,26 +1,37 @@
 package com.objectstyle.sku;
 
+import dev.tamboui.layout.Constraint;
+import dev.tamboui.style.Color;
+import dev.tamboui.style.Style;
 import dev.tamboui.toolkit.app.ToolkitApp;
 import dev.tamboui.toolkit.element.Element;
-import dev.tamboui.toolkit.elements.ListElement;
+import dev.tamboui.toolkit.elements.TableElement;
+import dev.tamboui.toolkit.event.EventResult;
+import dev.tamboui.tui.event.KeyEvent;
+import dev.tamboui.widgets.table.Cell;
+import dev.tamboui.widgets.table.Row;
+import dev.tamboui.widgets.table.TableState;
 import org.dflib.DataFrame;
-import org.dflib.row.RowProxy;
 
 import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.List;
 
 import static dev.tamboui.toolkit.Toolkit.*;
 
 public class SkuExplorerUI extends ToolkitApp {
 
+    private final SkuDAO skuDAO;
+
     private DataFrame modelSkus;
 
-    private ListElement<?> uiSkus;
     private Element uiRoot;
+    private TableElement uiSkus;
+    private TableState uiSkusState;
 
     public SkuExplorerUI(SkuDAO skuDAO) {
-        this.modelSkus = skuDAO.activeSkus(YearMonth.now());
+        this.skuDAO = skuDAO;
+
+        this.modelSkus = modelSkus();
+        this.uiSkusState = uiSkusState();
         this.uiSkus = uiSkus();
         this.uiRoot = uiRoot();
     }
@@ -30,32 +41,78 @@ public class SkuExplorerUI extends ToolkitApp {
         return uiRoot;
     }
 
-    private ListElement<?> uiSkus() {
+    private DataFrame modelSkus() {
+        return skuDAO
+                .activeSkus(YearMonth.now())
+                .cols().select("SKU, Person, Client, `Unit Price`");
+    }
 
-        List<String> skuLabels = new ArrayList<>(modelSkus.height());
-        modelSkus.forEach(r -> skuLabels.add(formatSku(r)));
+    private TableState uiSkusState() {
+        TableState state = new TableState();
+        state.select(0);
+        return state;
+    }
 
-        return list(skuLabels).autoScroll().scrollbar();
+    private TableElement uiSkus() {
+        return table()
+                .header(modelSkus.getColumnsIndex().toArray())
+                .widths(skuWidths())
+                .rows(skuRows())
+                .highlightSymbol(">> ")
+                .highlightStyle(Style.EMPTY.bg(Color.CYAN).fg(Color.BLACK))
+                .state(uiSkusState);
     }
 
     private Element uiRoot() {
         return column(
-                // header
-                panel(
-                        "SKU Explorer",
-                        text("Welcome to SKU Explorer!").bold().cyan()
-                ).rounded(),
-
                 // body
-                uiSkus,
+                panel(() -> uiSkus)
+                        .title("SKUs")
+                        .borderColor(Color.CYAN)
+                        .rounded()
+                        .fill(),
 
                 // footer
-                panel(text(" Up/Down: Navigate | q: Quit ").dim()
-                ).rounded()
-        );
+                text(" Up/Down: Navigate | q: Quit ").dim()
+        ).focusable().fill().onKeyEvent(this::handleKey);
     }
 
-    private static String formatSku(RowProxy r) {
-        return String.format("%s %s", r.get("SKU"), r.get("Person"));
+    private Constraint[] skuWidths() {
+        return new Constraint[]{
+                length(15), fill(50), length(25),
+
+                // expand to all available space
+                fill(100)
+        };
+    }
+
+    private Row[] skuRows() {
+        int w = modelSkus.width();
+        int h = modelSkus.height();
+
+        Row[] rows = new Row[h];
+        Cell[] row = new Cell[w];
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                Object v = modelSkus.get(j, i);
+                row[j] = Cell.from(v != null ? v.toString() : "");
+            }
+
+            rows[i] = Row.from(row);
+        }
+
+        return rows;
+    }
+
+    private EventResult handleKey(KeyEvent event) {
+        if (event.isDown()) {
+            uiSkusState.selectNext(modelSkus.height());
+            return EventResult.HANDLED;
+        } else if (event.isUp()) {
+            uiSkusState.selectPrevious();
+            return EventResult.HANDLED;
+        }
+
+        return EventResult.UNHANDLED;
     }
 }
