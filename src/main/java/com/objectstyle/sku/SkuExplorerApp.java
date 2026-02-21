@@ -1,45 +1,41 @@
 package com.objectstyle.sku;
 
-import dev.tamboui.toolkit.app.ToolkitApp;
-import dev.tamboui.toolkit.element.Element;
-import dev.tamboui.toolkit.elements.ListElement;
+import io.bootique.BQCoreModule;
+import io.bootique.BQModule;
+import io.bootique.Bootique;
+import io.bootique.di.Binder;
+import io.bootique.di.Provides;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
-import static dev.tamboui.toolkit.Toolkit.*;
+public class SkuExplorerApp implements BQModule {
 
-public class SkuExplorerApp extends ToolkitApp {
-
-    static void main() throws Exception {
-        new SkuExplorerApp().run();
-    }
-
-    private final ListElement<?> skuList;
-
-    public SkuExplorerApp() {
-        this.skuList = list()
-                .add("line 1")
-                .add("line 2")
-                .add("line 3")
-                .add("line 4")
-                .add("line 5")
-                .autoScroll()
-                .scrollbar();
+    static void main(String[] args) {
+        Bootique.main(args);
     }
 
     @Override
-    protected Element render() {
-        return column(
-                // header
-                panel(
-                        "SKU Explorer",
-                        text("Welcome to SKU Explorer!").bold().cyan()
-                ).rounded(),
+    public void configure(Binder binder) {
+        BQCoreModule.extend(binder)
+                .setDefaultCommand(StartUICommand.class)
+                .addConfig("classpath:config.yml");
+    }
 
-                // body
-                skuList,
+    @Provides
+    @Singleton
+    StartUICommand startUICommand(Provider<SkuExplorerUI> uiProvider) {
+        return new StartUICommand(uiProvider);
+    }
 
-                // footer
-                panel(text(" Up/Down: Navigate | q: Quit ").dim()
-                ).rounded()
-        );
+    @Provides
+    @Singleton
+    SkuExplorerUI provideUi(SkuDAO skuDAO) {
+        return new SkuExplorerUI(skuDAO);
+    }
+
+    @Provides
+    @Singleton
+    SkuDAO skuDAO() {
+        return new SkuDAO();
     }
 }
