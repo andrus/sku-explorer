@@ -1,6 +1,7 @@
 package com.objectstyle.sku;
 
 import dev.tamboui.layout.Constraint;
+import dev.tamboui.layout.Flex;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
 import dev.tamboui.toolkit.app.ToolkitApp;
@@ -64,6 +65,12 @@ public class SkuExplorerUI extends ToolkitApp {
     }
 
     private Element uiRoot() {
+        String status = String.format("%d active sku%s",
+                modelSkus.height(),
+                modelSkus.height() == 1 ? "" : "(s)");
+
+        String help = "Up/Down: Navigate | q: Quit";
+
         return column(
                 // body
                 panel(() -> uiSkus)
@@ -73,7 +80,9 @@ public class SkuExplorerUI extends ToolkitApp {
                         .fill(),
 
                 // footer
-                text(" Up/Down: Navigate | q: Quit ").dim()
+                column(
+                        row(text(status), text(help)).flex(Flex.SPACE_BETWEEN).dim()
+                )
         ).focusable().fill().onKeyEvent(this::handleKey);
     }
 
