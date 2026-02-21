@@ -3,30 +3,42 @@ package com.objectstyle.sku;
 import dev.tamboui.toolkit.app.ToolkitApp;
 import dev.tamboui.toolkit.element.Element;
 import dev.tamboui.toolkit.elements.ListElement;
+import org.dflib.DataFrame;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static dev.tamboui.toolkit.Toolkit.*;
 
 public class SkuExplorerUI extends ToolkitApp {
 
     private final SkuDAO skuDAO;
-    private final ListElement<?> skuList;
+
+    private ListElement<?> skus;
+    private Element root;
 
     public SkuExplorerUI(SkuDAO skuDAO) {
         this.skuDAO = skuDAO;
-        this.skuList = list()
-                .add("line 1")
-                .add("line 2")
-                .add("line 3")
-                .add("line 4")
-                .add("line 5")
-                .autoScroll()
-                .scrollbar();
-    }
 
+        this.skus = recreateSkus();
+        this.root = recreateRoot();
+    }
 
     @Override
     protected Element render() {
+        return root;
+    }
 
+    private ListElement<?> recreateSkus() {
+        DataFrame skusDf = skuDAO.findSkus();
+
+        List<String> skus = new ArrayList<>(skusDf.height());
+        skusDf.forEach(r -> skus.add(r.get(0, String.class)));
+
+        return list(skus).autoScroll().scrollbar();
+    }
+
+    private Element recreateRoot() {
         return column(
                 // header
                 panel(
@@ -35,7 +47,7 @@ public class SkuExplorerUI extends ToolkitApp {
                 ).rounded(),
 
                 // body
-                skuList,
+                skus,
 
                 // footer
                 panel(text(" Up/Down: Navigate | q: Quit ").dim()
