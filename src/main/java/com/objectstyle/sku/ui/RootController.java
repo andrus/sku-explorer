@@ -1,6 +1,6 @@
-package com.objectstyle.sku;
+package com.objectstyle.sku.ui;
 
-import dev.tamboui.layout.Constraint;
+import com.objectstyle.sku.dao.SkuDAO;
 import dev.tamboui.layout.Flex;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
@@ -20,64 +20,52 @@ import java.time.YearMonth;
 
 import static dev.tamboui.toolkit.Toolkit.*;
 
-public class SkuExplorerUI extends ToolkitApp {
+public class RootController extends ToolkitApp {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SkuExplorerUI.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RootController.class);
 
     private final SkuDAO skuDAO;
 
-    private DataFrame modelSkus;
+    private DataFrame skusModel;
 
-    private Element uiRoot;
-    private TableElement uiSkus;
-    private TableState uiSkusState;
+    private Element rootView;
+    private TableState skusState;
 
-    public SkuExplorerUI(SkuDAO skuDAO) {
+    public RootController(SkuDAO skuDAO) {
         this.skuDAO = skuDAO;
 
-        this.modelSkus = modelSkus();
-        this.uiSkusState = uiSkusState();
-        this.uiSkus = uiSkus();
-        this.uiRoot = uiRoot();
+        this.skusModel = skusModel();
+        this.skusState = skusState();
+        this.rootView = rootView();
     }
 
     @Override
     protected Element render() {
-        return uiRoot;
+        return rootView;
     }
 
-    private DataFrame modelSkus() {
+    private DataFrame skusModel() {
         return skuDAO
                 .activeSkus(YearMonth.now())
                 .cols().select("SKU, Person, Client, `Unit Price`");
     }
 
-    private TableState uiSkusState() {
+    private TableState skusState() {
         TableState state = new TableState();
         state.select(0);
         return state;
     }
 
-    private TableElement uiSkus() {
-        return table()
-                .header(modelSkus.getColumnsIndex().toArray())
-                .widths(skuWidths())
-                .rows(skuRows())
-                .highlightSymbol(">> ")
-                .highlightStyle(Style.EMPTY.bg(Color.CYAN).fg(Color.BLACK))
-                .state(uiSkusState);
-    }
-
-    private Element uiRoot() {
+    private Element rootView() {
         String status = String.format("%d active sku%s",
-                modelSkus.height(),
-                modelSkus.height() == 1 ? "" : "(s)");
+                skusModel.height(),
+                skusModel.height() == 1 ? "" : "(s)");
 
         String help = "Up/Down: Navigate | q: Quit";
 
         return column(
                 // body
-                panel(() -> uiSkus)
+                panel(() -> viewSkus())
                         .title("SKUs")
                         .borderColor(Color.CYAN)
                         .rounded()
@@ -90,24 +78,26 @@ public class SkuExplorerUI extends ToolkitApp {
         ).focusable().fill().onKeyEvent(this::handleKey);
     }
 
-    private Constraint[] skuWidths() {
-        return new Constraint[]{
-                length(15), fill(50), length(25),
-
-                // expand to all available space
-                fill(100)
-        };
+    private TableElement viewSkus() {
+        return table()
+                .header(skusModel.getColumnsIndex().toArray())
+                // expand the last column to the entire available space
+                .widths(length(15), fill(50), length(25), fill(100))
+                .rows(skuRows())
+                .highlightSymbol(">> ")
+                .highlightStyle(Style.EMPTY.bg(Color.CYAN).fg(Color.BLACK))
+                .state(skusState);
     }
 
     private Row[] skuRows() {
-        int w = modelSkus.width();
-        int h = modelSkus.height();
+        int w = skusModel.width();
+        int h = skusModel.height();
 
         Row[] rows = new Row[h];
         Cell[] row = new Cell[w];
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
-                Object v = modelSkus.get(j, i);
+                Object v = skusModel.get(j, i);
                 row[j] = Cell.from(v != null ? v.toString() : "");
             }
 
@@ -119,10 +109,10 @@ public class SkuExplorerUI extends ToolkitApp {
 
     private EventResult handleKey(KeyEvent event) {
         if (event.isDown()) {
-            uiSkusState.selectNext(modelSkus.height());
+            skusState.selectNext(skusModel.height());
             return EventResult.HANDLED;
         } else if (event.isUp()) {
-            uiSkusState.selectPrevious();
+            skusState.selectPrevious();
             return EventResult.HANDLED;
         }
 

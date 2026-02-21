@@ -1,4 +1,4 @@
-package com.objectstyle.sku;
+package com.objectstyle.sku.dao;
 
 import org.dflib.DataFrame;
 import org.dflib.csv.Csv;

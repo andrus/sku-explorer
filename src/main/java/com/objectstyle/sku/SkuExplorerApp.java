@@ -1,5 +1,6 @@
 package com.objectstyle.sku;
 
+import com.objectstyle.sku.dao.SkuDAO;
 import io.bootique.BQCoreModule;
 import io.bootique.BQModule;
 import io.bootique.Bootique;
@@ -29,14 +30,8 @@ public class SkuExplorerApp implements BQModule {
 
     @Provides
     @Singleton
-    StartUICommand startUICommand(Provider<SkuExplorerUI> uiProvider) {
-        return new StartUICommand(uiProvider);
-    }
-
-    @Provides
-    @Singleton
-    SkuExplorerUI provideUi(SkuDAO skuDAO) {
-        return new SkuExplorerUI(skuDAO);
+    StartUICommand startUICommand(Provider<SkuDAO> skuDAO) {
+        return new StartUICommand(skuDAO);
     }
 
     @Provides
